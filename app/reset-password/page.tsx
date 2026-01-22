@@ -98,10 +98,20 @@ export default function ResetPasswordPage() {
         }),
       })
 
-      const data = await response.json()
+      // Handle non-JSON responses
+      let data
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        const text = await response.text()
+        throw new Error(text || 'Failed to reset password')
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Failed to reset password')
+        // Handle different error response formats
+        const errorMessage = data?.error || data?.message || data?.details || `Server error: ${response.status}`
+        throw new Error(errorMessage)
       }
 
       // Success
@@ -113,9 +123,16 @@ export default function ResetPasswordPage() {
         router.push('/')
       }, 3000)
     } catch (error) {
-      setErrors({
-        submit: error instanceof Error ? error.message : 'An error occurred. Please try again.',
-      })
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setErrors({
+          submit: 'Network error. Please check your connection and try again.',
+        })
+      } else {
+        setErrors({
+          submit: error instanceof Error ? error.message : 'An error occurred. Please try again.',
+        })
+      }
     } finally {
       setIsLoading(false)
     }
