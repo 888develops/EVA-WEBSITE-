@@ -1,0 +1,189 @@
+# iOS App: Update Forgot Password to Use Edge Function + MailerSend
+
+## Context
+
+We're migrating from Supabase's built-in password reset emails to a custom MailerSend email flow using Supabase Edge Functions.
+
+**Platform:** iOS (Swift)
+
+## Current Implementation (OLD - Remove This)
+
+The app currently uses Supabase's built-in password reset:
+
+```swift
+// OLD CODE - REPLACE THIS
+try await supabase.auth.resetPasswordForEmail(email: email)
+```
+
+## New Implementation Required
+
+Replace the above with a URLSession call to our custom Edge Function that triggers MailerSend.
+
+## Edge Function Endpoint
+
+```
+https://ajirbalenvswlppqpqot.supabase.co/functions/v1/send-reset-email
+```
+
+## Implementation Code
+
+### Swift (iOS) - Main Implementation
+
+```swift
+func sendPasswordResetEmail(email: String) async throws {
+    guard let url = URL(string: "https://ajirbalenvswlppqpqot.supabase.co/functions/v1/send-reset-email") else {
+        throw NSError(domain: "Invalid URL", code: -1)
+    }
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    let body: [String: Any] = ["email": email]
+    request.httpBody = try JSONSerialization.data(withJSONObject: body)
+    
+    let (data, response) = try await URLSession.shared.data(for: request)
+    
+    guard let httpResponse = response as? HTTPURLResponse else {
+        throw NSError(domain: "Invalid response", code: -1)
+    }
+    
+    if httpResponse.statusCode == 200 {
+        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let success = json["success"] as? Bool, success {
+            // Show success message
+            DispatchQueue.main.async {
+                // Use your app's alert system
+                // self.showAlert(title: "Success", message: "Password reset email sent! Check your inbox.")
+            }
+        } else {
+            let errorMessage = (json["error"] as? String) ?? "Failed to send reset email"
+            throw NSError(domain: errorMessage, code: -1)
+        }
+    } else {
+        throw NSError(domain: "Server error: \(httpResponse.statusCode)", code: httpResponse.statusCode)
+    }
+}
+```
+
+### Example Usage in View/ViewModel
+
+```swift
+// In your ForgotPasswordView or ViewModel
+@MainActor
+func sendPasswordResetEmail(email: String) async {
+    do {
+        try await sendPasswordResetEmail(email: email)
+        // Show success alert
+        showAlert(title: "Success", message: "Password reset email sent! Check your inbox.")
+    } catch {
+        // Show error alert
+        showAlert(title: "Error", message: error.localizedDescription)
+    }
+}
+```
+
+### Alternative: Using Combine (if your app uses Combine)
+
+```swift
+import Combine
+
+func sendPasswordResetEmail(email: String) -> AnyPublisher<Void, Error> {
+    guard let url = URL(string: "https://ajirbalenvswlppqpqot.supabase.co/functions/v1/send-reset-email") else {
+        return Fail(error: NSError(domain: "Invalid URL", code: -1))
+            .eraseToAnyPublisher()
+    }
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    let body: [String: Any] = ["email": email]
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+    
+    return URLSession.shared.dataTaskPublisher(for: request)
+        .map(\.data)
+        .decode(type: ResetPasswordResponse.self, decoder: JSONDecoder())
+        .tryMap { response in
+            if response.success {
+                return ()
+            } else {
+                throw NSError(domain: response.error ?? "Failed to send reset email", code: -1)
+            }
+        }
+        .eraseToAnyPublisher()
+}
+
+struct ResetPasswordResponse: Codable {
+    let success: Bool
+    let error: String?
+    let message: String?
+}
+```
+
+## Expected Response Format
+
+The Edge Function returns JSON:
+
+**Success:**
+```json
+{
+  "success": true,
+  "message": "Password reset email sent"
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "error": "Error message here"
+}
+```
+
+## Complete Flow
+
+1. User taps "Forgot Password" button in app
+2. User enters their email address
+3. User taps "Send Reset Link" button
+4. App calls Edge Function: `POST /send-reset-email` with `{ email: "user@example.com" }`
+5. Edge Function:
+   - Generates reset token
+   - Stores token in Supabase
+   - Triggers MailerSend to send email
+6. User receives email from MailerSend with link: `https://energyvehiclealliance.com/reset-password?token=abc123`
+7. User clicks link → Opens reset password page on website
+8. User enters new password → Password updated via Edge Function
+
+## Email Link Format
+
+The email sent by MailerSend should contain:
+```
+https://energyvehiclealliance.com/reset-password?token={{token}}
+```
+
+Where `{{token}}` is the reset token generated by the Edge Function.
+
+## Testing Checklist
+
+- [ ] Replace `supabase.auth.resetPasswordForEmail()` with Edge Function call
+- [ ] Handle success response (show success message)
+- [ ] Handle error response (show error message)
+- [ ] Handle network errors
+- [ ] Test with valid email address
+- [ ] Test with invalid email address
+- [ ] Verify email is received from MailerSend
+- [ ] Verify email link opens reset password page
+- [ ] Verify reset password page works end-to-end
+
+## Notes
+
+- **Disable Supabase's default password reset emails** in Supabase dashboard (Authentication → Email Templates → Disable password reset emails)
+- The Edge Function handles token generation and MailerSend integration
+- The website reset password page is already built and ready at `/reset-password`
+- All password validation happens on the website reset page
+
+## Questions?
+
+If you need to modify the Edge Function endpoint or request/response format, coordinate with the backend team.
+

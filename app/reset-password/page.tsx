@@ -1,16 +1,14 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Lock, CheckCircle, XCircle } from 'lucide-react'
-
-const SUPABASE_ENDPOINT = 'https://ajirbalenvswlppqpqot.supabase.co/functions/v1/reset-password'
+import { supabase } from '@/lib/supabase'
 
 function ResetPasswordForm() {
-  const searchParams = useSearchParams()
   const router = useRouter()
-  const token = searchParams.get('token')
+  const [accessToken, setAccessToken] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     password: '',
@@ -77,8 +75,8 @@ function ResetPasswordForm() {
       return
     }
 
-    // Check if token exists
-    if (!token) {
+    // Check if access token exists
+    if (!accessToken) {
       setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
       return
     }
@@ -87,63 +85,61 @@ function ResetPasswordForm() {
     setErrors({})
 
     try {
-      const response = await fetch(SUPABASE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          password: formData.password,
-        }),
+      // Set the session with the recovery token
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: '', // Not needed for password reset
       })
 
-      // Handle non-JSON responses
-      let data
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json()
-      } else {
-        const text = await response.text()
-        throw new Error(text || 'Failed to reset password')
+      if (sessionError) {
+        throw new Error(sessionError.message || 'Invalid or expired reset token')
       }
 
-      if (!response.ok) {
-        // Handle different error response formats
-        const errorMessage = data?.error || data?.message || data?.details || `Server error: ${response.status}`
-        throw new Error(errorMessage)
+      // Update the password using Supabase auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: formData.password,
+      })
+
+      if (updateError) {
+        throw new Error(updateError.message || 'Failed to update password')
       }
 
       // Success
       setIsSuccess(true)
       setFormData({ password: '', confirmPassword: '' })
 
+      // Sign out the session (password reset complete)
+      await supabase.auth.signOut()
+
       // Redirect after 3 seconds
       setTimeout(() => {
         router.push('/')
       }, 3000)
     } catch (error) {
-      // Handle network errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        setErrors({
-          submit: 'Network error. Please check your connection and try again.',
-        })
-      } else {
-        setErrors({
-          submit: error instanceof Error ? error.message : 'An error occurred. Please try again.',
-        })
-      }
+      setErrors({
+        submit: error instanceof Error ? error.message : 'An error occurred. Please try again.',
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Check if token is missing on mount
+  // Extract access token from URL hash on mount
   useEffect(() => {
-    if (!token) {
-      setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
+    // Supabase sends tokens in URL hash: #access_token=...&type=recovery
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash
+      const params = new URLSearchParams(hash.substring(1))
+      const token = params.get('access_token')
+      const type = params.get('type')
+      
+      if (token && type === 'recovery') {
+        setAccessToken(token)
+      } else {
+        setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
+      }
     }
-  }, [token])
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -306,7 +302,7 @@ function ResetPasswordForm() {
             {/* Submit Button */}
             <motion.button
               type="submit"
-              disabled={isLoading || !token}
+              disabled={isLoading || !accessToken}
               whileHover={{ scale: isLoading ? 1 : 1.02 }}
               whileTap={{ scale: isLoading ? 1 : 0.98 }}
               className="w-full gradient-green-blue text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
