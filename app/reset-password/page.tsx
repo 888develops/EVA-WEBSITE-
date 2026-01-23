@@ -85,58 +85,75 @@ function ResetPasswordForm() {
     setErrors({})
 
     try {
-      // Set the session with the recovery token
-      const { error: sessionError } = await supabase.auth.setSession({
+      // First, set the session with the recovery token from the hash
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
-        refresh_token: '', // Not needed for password reset
+        refresh_token: '', // Refresh token not needed for password reset
       })
 
       if (sessionError) {
-        throw new Error(sessionError.message || 'Invalid or expired reset token')
+        throw new Error(sessionError.message || 'Invalid or expired reset token. Please request a new password reset.')
       }
 
-      // Update the password using Supabase auth
+      // Now update the password - the session is already set, so updateUser will use it
       const { error: updateError } = await supabase.auth.updateUser({
         password: formData.password,
       })
 
       if (updateError) {
-        throw new Error(updateError.message || 'Failed to update password')
+        throw new Error(updateError.message || 'Failed to update password. Please try again.')
       }
 
-      // Success
+      // Success - password updated
       setIsSuccess(true)
       setFormData({ password: '', confirmPassword: '' })
 
-      // Sign out the session (password reset complete)
+      // Sign out the session after password reset is complete
       await supabase.auth.signOut()
 
-      // Redirect after 3 seconds
+      // Redirect to home page after 3 seconds
       setTimeout(() => {
         router.push('/')
       }, 3000)
     } catch (error) {
+      // Handle errors and show user-friendly messages
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An error occurred while resetting your password. Please try again.'
+      
       setErrors({
-        submit: error instanceof Error ? error.message : 'An error occurred. Please try again.',
+        submit: errorMessage,
       })
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Extract access token from URL hash on mount
+  // Extract access_token from window.location.hash on mount
   useEffect(() => {
-    // Supabase sends tokens in URL hash: #access_token=...&type=recovery
     if (typeof window !== 'undefined') {
+      // Supabase sends tokens in URL hash format: #access_token=...&type=recovery
       const hash = window.location.hash
-      const params = new URLSearchParams(hash.substring(1))
-      const token = params.get('access_token')
-      const type = params.get('type')
       
+      if (!hash) {
+        setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
+        return
+      }
+
+      // Parse the hash to extract parameters
+      const hashParams = new URLSearchParams(hash.substring(1)) // Remove the '#' character
+      const token = hashParams.get('access_token')
+      const type = hashParams.get('type')
+      
+      // Verify it's a recovery token
       if (token && type === 'recovery') {
         setAccessToken(token)
+        // Clear any previous errors
+        setErrors({})
       } else {
-        setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
+        setErrors({ 
+          submit: 'Invalid or missing reset token. Please use the link from your password reset email.' 
+        })
       }
     }
   }, [])
