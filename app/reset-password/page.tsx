@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase'
 
 function ResetPasswordForm() {
   const router = useRouter()
-  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [isTokenExchanged, setIsTokenExchanged] = useState(false)
+  const [isExchanging, setIsExchanging] = useState(true)
 
   const [formData, setFormData] = useState({
     password: '',
@@ -75,9 +76,9 @@ function ResetPasswordForm() {
       return
     }
 
-    // Check if access token exists
-    if (!accessToken) {
-      setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
+    // Check if token was successfully exchanged
+    if (!isTokenExchanged) {
+      setErrors({ submit: 'Please wait for the reset link to be validated.' })
       return
     }
 
@@ -85,17 +86,7 @@ function ResetPasswordForm() {
     setErrors({})
 
     try {
-      // First, set the session with the recovery token from the hash
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: '', // Refresh token not needed for password reset
-      })
-
-      if (sessionError) {
-        throw new Error(sessionError.message || 'Invalid or expired reset token. Please request a new password reset.')
-      }
-
-      // Now update the password - the session is already set, so updateUser will use it
+      // Step 3: Update the password - session is already set from exchangeCodeForSession
       const { error: updateError } = await supabase.auth.updateUser({
         password: formData.password,
       })
@@ -129,33 +120,40 @@ function ResetPasswordForm() {
     }
   }
 
-  // Extract access_token from window.location.hash on mount
+  // Exchange token from URL hash on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Supabase sends tokens in URL hash format: #access_token=...&type=recovery
-      const hash = window.location.hash
-      
-      if (!hash) {
-        setErrors({ submit: 'Invalid or missing reset token. Please check your email link.' })
-        return
-      }
+    const exchangeToken = async () => {
+      if (typeof window === 'undefined') return
 
-      // Parse the hash to extract parameters
-      const hashParams = new URLSearchParams(hash.substring(1)) // Remove the '#' character
-      const token = hashParams.get('access_token')
-      const type = hashParams.get('type')
-      
-      // Verify it's a recovery token
-      if (token && type === 'recovery') {
-        setAccessToken(token)
-        // Clear any previous errors
-        setErrors({})
-      } else {
+      setIsExchanging(true)
+      setErrors({})
+
+      try {
+        // Step 1: Exchange token from URL hash using exchangeCodeForSession
+        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+
+        if (error) {
+          console.error('Token exchange failed:', error)
+          setErrors({ 
+            submit: 'Reset link invalid or expired. Please request a new password reset.' 
+          })
+          setIsExchanging(false)
+          return
+        }
+
+        // Step 2: Token exchange successful, show password form
+        setIsTokenExchanged(true)
+        setIsExchanging(false)
+      } catch (err) {
+        console.error('Unexpected error:', err)
         setErrors({ 
-          submit: 'Invalid or missing reset token. Please use the link from your password reset email.' 
+          submit: 'An error occurred. Please try again or request a new password reset.' 
         })
+        setIsExchanging(false)
       }
     }
+
+    exchangeToken()
   }, [])
 
   return (
@@ -206,8 +204,20 @@ function ResetPasswordForm() {
           </motion.div>
         )}
 
+        {/* Loading State - Exchanging Token */}
+        {isExchanging && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center"
+          >
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-blue mx-auto mb-4"></div>
+            <p className="text-gray-600">Validating reset link...</p>
+          </motion.div>
+        )}
+
         {/* Form */}
-        {!isSuccess && (
+        {!isSuccess && !isExchanging && isTokenExchanged && (
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -319,7 +329,7 @@ function ResetPasswordForm() {
             {/* Submit Button */}
             <motion.button
               type="submit"
-              disabled={isLoading || !accessToken}
+              disabled={isLoading || !isTokenExchanged}
               whileHover={{ scale: isLoading ? 1 : 1.02 }}
               whileTap={{ scale: isLoading ? 1 : 0.98 }}
               className="w-full gradient-green-blue text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
