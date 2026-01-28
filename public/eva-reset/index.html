@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opening EVA App...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(180deg, #00FF0A 0%, #0094F7 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container { max-width: 400px; }
+        h1 { font-size: 22px; margin-bottom: 16px; }
+        p { font-size: 15px; opacity: 0.95; margin-bottom: 24px; }
+        .open-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .open-btn:hover { background: rgba(255,255,255,0.35); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Opening EVA App...</h1>
+        <p>You're being redirected to set your new password in the app.</p>
+        <p><a href="#" id="openApp" class="open-btn">Tap here if the app didn't open</a></p>
+    </div>
+
+    <script>
+        (function() {
+            // Supabase puts tokens in the fragment: #access_token=...&refresh_token=...&type=recovery
+            // or in query for PKCE: ?code=...
+            var hash = window.location.hash || '';
+            var search = window.location.search || '';
+            var base = 'eva://reset-password/';
+            var deepLink = base + (hash ? hash : search);
+
+            var openApp = document.getElementById('openApp');
+            openApp.href = deepLink;
+
+            // Redirect immediately so Mail's in-app browser hands off to the app (no long-press needed)
+            window.location.replace(deepLink);
+        })();
+    </script>
+</body>
+</html>

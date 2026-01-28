@@ -7,3 +7,16 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Serve eva-reset index when user hits /eva-reset
+[[redirects]]
+  from = "/eva-reset"
+  to = "/eva-reset/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/eva-reset/"
+  to = "/eva-reset/index.html"
+  status = 200
+  force = true
+
