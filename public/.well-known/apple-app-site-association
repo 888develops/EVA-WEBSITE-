@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "M5H3838BUB.com.energyvehiclealliance.evamapbox2",
+        "paths": ["/eva-reset", "/eva-reset/*"]
+      }
+    ]
+  }
+}

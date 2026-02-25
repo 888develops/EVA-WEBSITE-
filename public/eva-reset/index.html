@@ -42,17 +42,13 @@
 
     <script>
         (function() {
-            // Supabase puts tokens in the fragment: #access_token=...&refresh_token=...&type=recovery
-            // or in query for PKCE: ?code=...
-            var hash = window.location.hash || '';
-            var search = window.location.search || '';
-            var base = 'eva://reset-password/';
-            var deepLink = base + (hash ? hash : search);
+            // Always pass token from URL into the app link (hash or query from Supabase)
+            var deepLink = 'eva://reset-password' + (window.location.hash || window.location.search);
 
             var openApp = document.getElementById('openApp');
             openApp.href = deepLink;
 
-            // Redirect immediately so Mail's in-app browser hands off to the app (no long-press needed)
+            // Redirect immediately so Mail's in-app browser hands off to the app
             window.location.replace(deepLink);
         })();
     </script>

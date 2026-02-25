@@ -20,3 +20,8 @@
   status = 200
   force = true
 
+# Apple App Site Association for Universal Links (password reset)
+[[headers]]
+  for = "/.well-known/apple-app-site-association"
+  [headers.values]
+    Content-Type = "application/json"
