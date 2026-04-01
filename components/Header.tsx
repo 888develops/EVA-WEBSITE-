@@ -39,13 +39,13 @@ export default function Header() {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'gradient-green-blue shadow-lg' : 'gradient-green-blue'
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -53,7 +53,7 @@ export default function Header() {
             className="flex items-center cursor-pointer"
             onClick={() => scrollToSection('#hero')}
           >
-            <div className="relative w-20 h-20">
+            <div className="relative w-11 h-11 sm:w-14 sm:h-14">
               <Image
                 src="/logo.png"
                 alt="EVA Logo"
@@ -65,7 +65,7 @@ export default function Header() {
           </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item, index) => (
               <motion.button
                 key={item.name}
@@ -83,7 +83,7 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-white"
+            className="md:hidden text-white p-2 rounded-md hover:bg-white/10 transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -97,13 +97,13 @@ export default function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden py-4 space-y-4"
+            className="md:hidden py-3 space-y-2 bg-black/10 rounded-xl mb-3 px-3 backdrop-blur-sm"
           >
             {navItems.map((item) => (
               <button
                 key={item.name}
                 onClick={() => scrollToSection(item.href)}
-                className="block w-full text-left text-white font-medium hover:text-white/80 transition-colors duration-300 py-2"
+                className="block w-full text-left text-white font-medium hover:text-white/80 transition-colors duration-300 py-2.5"
               >
                 {item.name}
               </button>

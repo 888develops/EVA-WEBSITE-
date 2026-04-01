@@ -34,13 +34,13 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[#1a1a1a] text-white py-16">
+    <footer className="bg-[#1a1a1a] text-white py-12 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-10 sm:mb-12">
           {/* Logo & Description */}
           <div className="lg:col-span-2">
             <div className="flex items-center mb-4">
-              <div className="relative w-20 h-20">
+              <div className="relative w-14 h-14 sm:w-20 sm:h-20">
                 <Image
                   src="/logo.png"
                   alt="EVA Logo"

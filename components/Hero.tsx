@@ -12,7 +12,7 @@ export default function Hero() {
   }
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
+    <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-20 sm:pt-24">
       {/* Animated Gradient Background */}
       <div className="absolute inset-0 gradient-green-blue-animated opacity-10 z-0" />
       
@@ -26,7 +26,7 @@ export default function Hero() {
             y: [0, 50, 0],
           }}
           transition={{
-            duration: 20,
+            duration: 14,
             repeat: Infinity,
             ease: 'easeInOut',
           }}
@@ -39,7 +39,7 @@ export default function Hero() {
             y: [0, -50, 0],
           }}
           transition={{
-            duration: 25,
+            duration: 18,
             repeat: Infinity,
             ease: 'easeInOut',
           }}
@@ -51,8 +51,8 @@ export default function Hero() {
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="font-heading font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-6"
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          className="font-heading font-bold text-4xl sm:text-6xl md:text-7xl lg:text-8xl mb-5 sm:mb-6 leading-tight"
         >
           <span className="text-gradient">Powering the Future</span>
           <br />
@@ -62,8 +62,8 @@ export default function Hero() {
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-          className="text-xl sm:text-2xl md:text-3xl text-gray-700 max-w-3xl mx-auto mb-12 leading-relaxed"
+          transition={{ duration: 0.55, delay: 0.12, ease: 'easeOut' }}
+          className="text-lg sm:text-2xl md:text-3xl text-gray-700 max-w-3xl mx-auto mb-8 sm:mb-12 leading-relaxed px-1"
         >
           EVA connects electric vehicle drivers with charging station hosts, making EV charging accessible, convenient, and profitable for everyone.
         </motion.p>
@@ -71,14 +71,14 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 0.55, delay: 0.2, ease: 'easeOut' }}
           className="flex justify-center items-center"
         >
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToNext}
-            className="px-8 py-4 bg-white text-[#1a1a1a] font-semibold rounded-full border-2 border-brand-blue hover:bg-brand-blue hover:text-white transition-all duration-300"
+            className="px-7 sm:px-8 py-3.5 sm:py-4 bg-white text-[#1a1a1a] font-semibold rounded-full border-2 border-brand-blue hover:bg-brand-blue hover:text-white transition-all duration-300"
           >
             Learn More
           </motion.button>
@@ -89,12 +89,12 @@ export default function Hero() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
-        className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20"
+        transition={{ delay: 0.65, duration: 0.5 }}
+        className="absolute bottom-6 sm:bottom-10 left-1/2 transform -translate-x-1/2 z-20"
       >
         <motion.button
           animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           onClick={scrollToNext}
           className="text-brand-blue hover:text-brand-green transition-colors"
           aria-label="Scroll down"

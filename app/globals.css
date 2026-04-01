@@ -12,6 +12,10 @@
     scroll-behavior: smooth;
   }
 
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-white text-[#1a1a1a];
   }
@@ -41,7 +45,8 @@
   }
 
   .card-hover {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-200 ease-out;
+    will-change: transform;
   }
 
   .card-hover:hover {
@@ -65,8 +70,8 @@
 @media (prefers-reduced-motion: no-preference) {
   .animate-on-scroll {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    transform: translateY(20px);
+    transition: opacity 0.35s ease-out, transform 0.35s ease-out;
   }
 
   .animate-on-scroll.visible {
