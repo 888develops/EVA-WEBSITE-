@@ -17,8 +17,8 @@ const footerLinks = {
     { name: 'Help Center', href: '#' },
   ],
   legal: [
-    { name: 'Privacy Policy', href: '#' },
-    { name: 'Terms & Conditions', href: '#' },
+    { name: 'Privacy Policy', href: '/privacy-policy' },
+    { name: 'Terms & Conditions', href: '/terms-and-conditions' },
     { name: 'Cookie Policy', href: '#' },
   ],
 }

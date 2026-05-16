@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import Image from 'next/image'
+import { usePathname, useRouter } from 'next/navigation'
 
 const navItems = [
   { name: 'About', href: '#about' },
@@ -16,8 +17,19 @@ const navItems = [
 ]
 
 export default function Header() {
+  const router = useRouter()
+  const pathname = usePathname()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const goHome = () => {
+    if (pathname === '/') {
+      scrollToSection('#hero')
+    } else {
+      router.push('/')
+    }
+    setIsMobileMenuOpen(false)
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +40,11 @@ export default function Header() {
   }, [])
 
   const scrollToSection = (href: string) => {
+    if (pathname !== '/') {
+      router.push('/' + href)
+      setIsMobileMenuOpen(false)
+      return
+    }
     const element = document.querySelector(href)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
@@ -51,7 +68,7 @@ export default function Header() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center cursor-pointer"
-            onClick={() => scrollToSection('#hero')}
+            onClick={goHome}
           >
             <div className="relative w-11 h-11 sm:w-14 sm:h-14">
               <Image
